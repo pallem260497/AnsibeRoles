@@ -1,0 +1,8 @@
+- name: include task java
+  include_tasks: java.yml
+- name: include git clone
+  include_tasks: gitclone.yml
+- name: include maven
+  include_tasks: maven.yml
+- name: include tomcat
+  include_tasks: tomcat.yml

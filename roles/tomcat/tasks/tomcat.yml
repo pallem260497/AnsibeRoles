@@ -1,0 +1,85 @@
+    - name: Ensure group "tomcat" exists
+      group:
+        name: tomcat
+        state: present
+        system : yes
+
+    - name: Add the user 'tomcat' to group tomcat
+      ansible.builtin.user:
+        name: tomcat
+        group: tomcat
+        system: yes
+        shell: /usr/bin/false
+        home: /usr/share/tomcat
+
+    - name: tomcat downlaod
+      get_url:
+        url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.65/bin/apache-tomcat-9.0.65.tar.gz
+        dest: /usr/share/
+        owner: tomcat
+        group: tomcat
+        mode: '0755'
+
+    - name: unarchive tomcat
+      unarchive:
+        src: /usr/share/apache-tomcat-9.0.65.tar.gz
+        dest: /usr/share/tomcat
+        owner: tomcat
+        group: tomcat
+        mode: "0755"
+        remote_src: yes
+
+    - name: Create Tomcat Systemd service
+      ansible.builtin.blockinfile:
+        path: /etc/systemd/system/tomcat.service
+        create: yes
+        owner: tomcat
+        group: tomcat
+        mode: '0755'
+        block: |
+          [Unit]
+          Description=Tomcat Server
+          After=syslog.target network.target
+
+          [Service]
+          Type=forking
+          User=tomcat
+          Group=tomcat
+
+          Environment=JAVA_HOME=/usr/lib/jvm/jre
+          Environment='JAVA_OPTS=-Djava.awt.headless=true'
+          Environment=CATALINA_HOME=/usr/share/tomcat/apache-tomcat-9.0.65
+          Environment=CATALINA_BASE=/usr/share/tomcat/apache-tomcat-9.0.65
+          Environment=CATALINA_PID=/usr/share/tomcat/apache-tomcat-9.0.65/temp/tomcat.pid
+          Environment='CATALINA_OPTS=-Xms512M -Xmx1024M'
+          ExecStart=/usr/share/tomcat/apache-tomcat-9.0.65/bin/catalina.sh start
+          ExecStop=/usr/share/tomcat/apache-tomcat-9.0.65/bin/catalina.sh stop
+
+          [Install]
+          WantedBy=multi-user.target
+    - name: Enable service httpd and ensure it is not masked
+      ansible.builtin.systemd:
+        name: tomcat
+        enabled: yes
+        daemon_reload: yes
+
+    - name: run the tomcat service
+      ansible.builtin.systemd:
+        name: tomcat
+        state: started
+
+
+    - name: copy artifact to tomcat
+      copy:
+        src: /etc/ansible/GitHubRepos/Demo-mvn3.8.6/target/mvnwebapp.war
+        dest: /usr/share/tomcat/apache-tomcat-9.0.65/webapps/
+        owner: tomcat
+        group: tomcat
+        mode: '0755'
+        remote_src: yes
+
+    - name: run the tomcat service
+      ansible.builtin.systemd:
+        name: tomcat
+        state: restarted
+

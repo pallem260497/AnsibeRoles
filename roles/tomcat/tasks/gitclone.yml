@@ -1,0 +1,13 @@
+    - name: create folder for Github repos
+      file:
+        state: directory
+        path: /etc/ansible/GitHubReposDemo-mvn3.8.6
+        owner: ec2-user
+        mode: '0755'
+
+    - name: clone github repo
+      git:
+        repo: 'https://github.com/pallem260497/Demo-mvn3.8.6.git'
+        dest: /etc/ansible/GitHubRepos/Demo-mvn3.8.6/
+
+

@@ -1,0 +1,51 @@
+    - name: install maven
+      get_url:
+        url: "https://dlcdn.apache.org/maven/maven-3/{{maven_version}}/binaries/apache-maven-{{maven_version}}-bin.tar.gz"
+        dest: /opt/
+        owner: ec2-user
+        group: ec2-user
+        mode: '0755'
+
+
+    - name: extract Maven
+      unarchive:
+        src: "/opt/apache-maven-{{maven_version}}-bin.tar.gz"
+        dest: /opt/
+        owner: ec2-user
+        group: ec2-user
+        mode: '0755'
+        remote_src: yes
+
+
+    - name: set java and maven Home paths
+      ansible.builtin.blockinfile:
+        path: /etc/profile.d/maven.sh
+        create: yes
+        owner: ec2-user
+        group: ec2-user
+        mode: '0777'
+        block: |
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+          export M2_HOME=/opt/apache-maven-3.8.6
+          export MAVEN_HOME=/opt/apache-maven-3.8.6
+          export PATH=${M2_HOME}/bin:${PATH}
+
+
+    - name: source maven.sh
+      shell: source /etc/profile.d/maven.sh
+      become_user: root
+
+    - name: Creating a symlink
+      ansible.builtin.file:
+        src: "/opt/apache-maven-{{maven_version}}/bin/mvn"
+        dest: /usr/bin/mvn
+        state: link
+
+
+    - name: maven build
+      command:  mvn clean package
+      args:
+        chdir: /etc/ansible/GitHubRepos/Demo-mvn3.8.6/
+      become: yes
+
+

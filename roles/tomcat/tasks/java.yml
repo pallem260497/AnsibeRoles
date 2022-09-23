@@ -1,0 +1,13 @@
+    - name: update yum package manager
+      yum:
+        name: '*'
+        state: latest
+        update_cache : yes
+
+    - name: install dependent softwares
+      yum:
+        name:
+          - java
+          - git
+        state: latest
+

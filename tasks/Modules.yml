@@ -1,0 +1,46 @@
+---
+- name: Ansible Modules Demo
+  hosts: webservers
+  become: yes
+  vars:
+    greetings: "Hello"
+    site: "Wonderlaw"
+  tasks:
+  - name: install java with linux command
+    yum: 
+      name: java-1.8.0-openjdk.x86_64
+      state: installed
+  - name: create a file
+    file:
+      path: /opt/tomcat
+      state: directory
+      owner: ec2-user
+      mode: u+rwx,g-wx,o-rwx
+  - name: Add the user 'johnd' with a specific uid and a primary group of 'admin'
+    ansible.builtin.user:
+      name: test
+      group: wheel
+  - name: Download file with check (sha256)
+    get_url:
+      url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.65/bin/apache-tomcat-9.0.65.tar.gz
+      dest: /opt/
+  
+  - name: Extract tomcat into opt
+    ansible.builtin.unarchive:
+      src: /opt/apache-tomcat-9.0.65.tar.gz
+      remote_src: yes
+      dest: /opt/tomcat/
+
+  - name: To check free memory on remote host 
+    shell: free -m
+    register: free_var
+
+  - name: Print the value of a variable
+    debug:
+      msg: "{{ greetings }}, Welcome to {{ site }}."
+  
+  - name: Shut down CentOS 6 and Debian 7 systems
+    ansible.builtin.command: /sbin/shutdown -t now
+    when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "6") or
+          (ansible_facts['distribution'] == "Debian" and ansible_facts['distribution_major_version'] == "7") 
+...
